@@ -22,8 +22,8 @@ TOP := ../../k210.bin
 BOARD ?= qemu
 SBI ?= rustsbi
 ifeq ($(BOARD), qemu)
-	BOOTLOADER := default
-#	BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin # If you have no OpenSBI, try RustSBI.
+#	BOOTLOADER := default
+	BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin # If you have no OpenSBI, try RustSBI.
 #	BOOTLOADER := ../bootloader/$(SBI)-$(BOARD)-new.bin # If you want to use new RustSBI, try this.
 else ifeq ($(BOARD), k210)
 	BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin
