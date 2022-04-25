@@ -12,7 +12,7 @@ use spin::*;
 use timer::get_timeval;
 use syscall::*;
 use alloc::sync::Arc;
-
+use core::time;
 extern crate alloc;
 
 #[macro_use]
@@ -33,6 +33,7 @@ mod timer;
 mod mm;
 mod fs;
 mod drivers;
+mod sync;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("start_app.S"));
@@ -88,11 +89,12 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub fn rust_main() -> ! {
+pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
+    println!("device_tree_paddr:{}",device_tree_paddr);
     let core = id();
-    // println!("core {} is running",core);
+    println!("core {} is running",core);
     if core != 0 {
-        loop{}
+        //loop{}
         /// WARNING: Multicore mode only supports customized RustSBI platform, especially not including OpenSBI
         /// We use OpenSBI in qemu and customized RustSBI in k210, if you want to try Multicore mode, you have to
         /// try to switch to RustSBI in qemu and try to wakeup, which needs some effort and you can refer to docs.
@@ -103,6 +105,7 @@ pub fn rust_main() -> ! {
         trap::enable_timer_interrupt();
         timer::set_next_trigger();
         println!("other core start run tasks");
+        loop{};
         task::run_tasks();
         panic!("Unreachable in rust_main!");
     }

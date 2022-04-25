@@ -3,12 +3,14 @@
 _start:
     # tp:hart_id 
     # mv a0,tp # RustSBI
+    mv a3, a1
     mv tp, a0 # OpenSBI
     la a1, boot_stack_top
     slli a0, a0, 15 # hart_id* stacksize
     add a0, a0, a1
     # a0 = boot_stack_top + hart_id* stacksize
     mv sp, a0
+    mv a1, a3
     call rust_main
 
     .section .bss.stack

@@ -135,7 +135,7 @@ pub fn add_initproc_into_fs() {
         OpenFlags::CREATE,
         DiskInodeType::Directory
     );
-
+    let mut flag:i32=0;
     // find if there already exits 
     // println!("Find if there already exits ");
     if let Some(inode) = open(
@@ -146,6 +146,7 @@ pub fn add_initproc_into_fs() {
     ){
         println!("Already have init proc in FS");
         //return;
+        flag = flag + 1;
         inode.delete();
     }
 
@@ -157,9 +158,12 @@ pub fn add_initproc_into_fs() {
     ){
         println!("Already have init proc in FS");
         //return;
+        flag = flag + 1;
         inode.delete();
     }
-
+    if flag == 2 {
+        return
+    }
 
     // println!("Write apps(initproc & user_shell) to disk from mem ");
 

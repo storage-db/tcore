@@ -17,8 +17,8 @@ pub fn get_core_id() -> usize{
     unsafe {
         llvm_asm!("mv $0, tp" : "=r"(tp));
     }
-    // tp
-    0
+     tp
+    //0
 }
 
 pub struct Processor {

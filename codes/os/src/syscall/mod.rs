@@ -63,10 +63,13 @@ const SYSCALL_LS: usize = 500;
 const SYSCALL_SHUTDOWN: usize = 501;
 const SYSCALL_CLEAR: usize = 502;
 
+const SYSCALL_GPUTEST:usize =666;
+
 mod fs;
 mod process;
-
+mod gpu;
 pub use fs::*;
+pub use gpu::*;
 use process::*;
 use crate::gdb_print;
 use crate::monitor::*;
@@ -234,6 +237,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
         SYSCALL_LS => sys_ls(args[0] as *const u8),
         SYSCALL_SHUTDOWN => shutdown(),
         SYSCALL_CLEAR => sys_clear(args[0] as *const u8),
+        SYSCALL_GPUTEST=>{sys_gputest();1},
         _ => 0
         //_ => {println!("Unsupported syscall_id:{}, arg0={} arg1={}", syscall_id, args[0], args[1]); 0}
         //_ => panic!("Unsupported syscall_id: {}", syscall_id),

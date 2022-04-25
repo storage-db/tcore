@@ -211,3 +211,5 @@ pub fn sleep(period_ms: usize) {
 pub fn ls(path: &str) -> isize { sys_ls(path) }
 pub fn shutdown() -> isize { sys_shutdown() }
 pub fn trap() -> isize { sys_trap() }
+pub fn gpu_test(){ sys_gputest() }
+
