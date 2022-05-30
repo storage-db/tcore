@@ -124,6 +124,7 @@ pub struct ProcessControlBlock {
 ![进程新建示意](docs/images/进程新建过程.png)
 
 + Tcore开机流程示意
+
 ![开机加载](docs/images/起电.png)
 
 ## 作品特征描述
