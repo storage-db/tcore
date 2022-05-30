@@ -250,7 +250,7 @@ pub struct ArgMachine {
 impl ArgMachine {
     //display the cmd head
     fn print_root(&mut self) {
-        print!("{}@UltraOS: /", color_text!("root", 32));
+        print!("{}@Tcore: /", color_text!("root", 32));
         self.path.iter().for_each(|string| print!("{}/", string));
         print!(" >>");
     }
@@ -417,361 +417,6 @@ impl ArgMachine {
         return true;
     }
 
-    pub fn auto_run_busy_box() {
-        //unlink("result.txt\0");
-        open("result.txt\0", OpenFlags::CREATE);
-    }
-
-    pub fn auto_run_testsuites() {
-        // ArgMachine::auto_run_busybox();
-        // ArgMachine::auto_run_lmbench();
-        // ArgMachine::final_ten_hours();
-    }
-
-    pub fn final_ten_hours() {
-        let mut exit_code = 0;
-
-        println!("!!!!!!!!!AUTORUN!!!!!!!!!");
-        mkdir("/var");
-        mkdir("/var/tmp");
-        open("/var/tmp/lmbench", OpenFlags::CREATE);
-        mkdir("/tmp");
-
-        let mut testsuits: Vec<&str> = Vec::new();
-        testsuits.push("lmbench_all\0lmdd\0label=\"File /var/tmp/XXX write bandwidth:\"\0of=/var/tmp/XXX\0move=1m\0fsync=1\0print=3");
-
-        testsuits.push("busybox\0echo\0START\0lat_proc_exec");
-        testsuits.push("lmbench_all\0lat_proc\0-P\01\0exec");
-        testsuits.push("busybox\0echo\0END\0lat_proc_exec\0$?");
-
-        testsuits.push("busybox\0echo\0START\0lat_proc_fork");
-        testsuits.push("lmbench_all\0lat_proc\0-P\01\0fork");
-        testsuits.push("busybox\0echo\0END\0lat_proc_fork\0$?");
-
-        testsuits.push("busybox\0echo\0START\0bw_file_rd_io_only");
-        testsuits.push("lmbench_all\0bw_file_rd\0-P\01\0512k\0io_only\0/var/tmp/XXX"); //ok
-        testsuits.push("busybox\0echo\0END\0bw_file_rd\0io_only\0$?");
-
-        testsuits.push("busybox\0echo\0START\0bw_file_rd_open2close");
-        testsuits.push("lmbench_all\0bw_file_rd\0-P\01\0512k\0open2close\0/var/tmp/XXX"); //ok
-        testsuits.push("busybox\0echo\0END\0bw_file_rd\0open2close\0$?");
-
-        testsuits.push("busybox\0echo\0START\0lat_ctx");
-        testsuits.push("lmbench_all\0lat_ctx\0-P\01\0-s\032\02\04\08\016\024\032"); // wait for kill
-        testsuits.push("busybox\0echo\0END\0lat_ctx\0$?");
-
-        testsuits.push("busybox\0echo\0START\0lat_pipe");
-        testsuits.push("lmbench_all\0lat_pipe\0-P\01");
-        testsuits.push("busybox\0echo\0END\0lat_pipe\0$?");
-
-        testsuits.push("busybox\0echo\0START\0lat_pagefault");
-        testsuits.push("lmbench_all\0lat_pagefault\0-P\01\0/var/tmp/XXX"); //latency too short???
-        testsuits.push("busybox\0echo\0END\0lat_pagefault\0$?");
-
-        testsuits.push("busybox\0echo\0START\0lat_mmap");
-        testsuits.push("lmbench_all\0lat_mmap\0-P\01\0512k\0/var/tmp/XXX"); //ok
-        testsuits.push("busybox\0echo\0END\0lat_mmap\0$?");
-
-        testsuits.push("busybox\0echo\0START\0bw_pipe");
-        testsuits.push("lmbench_all\0bw_pipe\0-P\01");
-        testsuits.push("busybox\0echo\0END\0bw_pipe\0$?");
-
-        println!("scan str iter");
-        for programname_op in testsuits.iter() {
-            let exec_str = String::new() + programname_op;
-            let exec_str = str::replace(exec_str.as_str(), "$?", exit_code.to_string().as_str());
-            let args: Vec<&str> = exec_str.split('\0').into_iter().collect();
-            let args_string: Vec<String> = args
-                .iter()
-                .map(|str| {
-                    let mut string = String::new();
-                    string.push_str(str);
-                    string.push('\0');
-                    string
-                })
-                .collect();
-
-            let mut args_addr: Vec<*const u8> = Vec::new();
-            for i in 0..args.len() {
-                args_addr.push(args_string[i].as_ptr() as usize as *const u8);
-            }
-            args_addr.push(0 as *const u8);
-            let pid = fork();
-            if pid == 0 {
-                //println!("exec");
-                if exec(args_string[0].as_str(), args_addr.as_slice()) == -1 {
-                    println!("Error when executing autorun_testsuites!");
-                    ls("/");
-                    shutdown();
-                }
-                unreachable!();
-            } else {
-                waitpid(pid as usize, &mut exit_code);
-            }
-        }
-        shutdown();
-    }
-
-    pub fn auto_run_lmbench() {
-        println!("!!!!!!!!!AUTORUN!!!!!!!!!");
-        mkdir("/var");
-        mkdir("/var/tmp");
-        open("/var/tmp/lmbench", OpenFlags::CREATE);
-        mkdir("/tmp");
-        //open("/hello", OpenFlags::CREATE);
-        //ls("/");
-
-        println!("latency measurements");
-        let mut testsuits: Vec<&str> = Vec::new();
-        //testsuits.push("busybox\0ls");
-        // testsuits.push("usertests");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0null");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0read");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0write");
-        // testsuits.push("busybox mkdir -p /var/tmp");
-        // testsuits.push("busybox touch /var/tmp/lmbench");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0stat\0/var/tmp/lmbench");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0fstat\0/var/tmp/lmbench");
-        testsuits.push("lmbench_all\0lat_syscall\0-P\01\0open\0/var/tmp/lmbench");
-        testsuits.push("lmbench_all\0lat_select\0-n\0100\0-P\01\0file");
-        testsuits.push("lmbench_all\0lat_sig\0-P\01\0install");
-        testsuits.push("lmbench_all\0lat_sig\0-P\01\0catch");
-        testsuits.push("lmbench_all\0lat_proc\0-P\01\0fork");
-        testsuits.push("lmbench_all\0lat_proc\0-P\01\0exec");
-        //testsuits.push("busybox\0cp\0hello\0/tmp");
-        testsuits.push("lmbench_all\0lat_proc\0-P\01\0shell");
-        /* param move shoud > 512k*/
-        testsuits.push("lmbench_all\0lmdd\0label=\"File /var/tmp/XXX write bandwidth:\"\0of=/var/tmp/XXX\0move=1m\0fsync=1\0print=3");
-        //
-        testsuits.push("lmbench_all\0lat_pagefault\0-P\01\0/var/tmp/XXX"); //latency too short???
-        testsuits.push("lmbench_all\0lat_pagefault\0-P\01\0/var/tmp/XXX"); //latency too short???
-        testsuits.push("lmbench_all\0lat_pagefault\0-P\01\0/var/tmp/XXX"); //latency too short???
-
-        testsuits.push("lmbench_all\0lat_mmap\0-P\01\0512k\0/var/tmp/XXX"); //ok
-
-        testsuits.push("lmbench_all\0lat_sig\0-P\01\0prot\0lat_sig");
-        testsuits.push("lmbench_all\0lat_pipe\0-P\01"); // 需要SIGKILL
-                                                        // testsuits.push("busybox\0echo\0file\0system\0latency");
-        testsuits.push("lmbench_all\0lat_fs\0/var/tmp"); // kernel accesses lazystack
-                                                         // testsuits.push("busybox\0echo\0Bandwidth\0measurements");
-        testsuits.push("lmbench_all\0bw_pipe\0-P\01"); //需要SIGKILL
-        testsuits.push("lmbench_all\0bw_file_rd\0-P\01\0512k\0io_only\0/var/tmp/XXX"); //ok
-        testsuits.push("lmbench_all\0bw_file_rd\0-P\01\0512k\0open2close\0/var/tmp/XXX"); //ok
-        testsuits.push("lmbench_all\0bw_mmap_rd\0-P\01\0512k\0mmap_only\0/var/tmp/XXX"); //ok
-        testsuits.push("lmbench_all\0bw_mmap_rd\0-P\01\0512k\0open2close\0/var/tmp/XXX"); //ok
-                                                                                          // testsuits.push("busybox\0echo\0context\0switch\0overhead");
-        testsuits.push("lmbench_all\0lat_ctx\0-P\01\0-s\032\02\04\08\016\024\032\064\096"); // wait for kill
-
-        println!("scan str iter");
-        for programname_op in testsuits.iter() {
-            let mut exit_code = 0;
-            let exec_str = String::new() + programname_op;
-            let args: Vec<&str> = exec_str.as_str().split('\0').into_iter().collect();
-            let args_string: Vec<String> = args
-                .iter()
-                .map(|str| {
-                    let mut string = String::new();
-                    string.push_str(str);
-                    string.push('\0');
-                    string
-                })
-                .collect();
-
-            let mut args_addr: Vec<*const u8> = Vec::new();
-            for i in 0..args.len() {
-                args_addr.push(args_string[i].as_ptr() as usize as *const u8);
-            }
-            args_addr.push(0 as *const u8);
-            let pid = fork();
-            if pid == 0 {
-                //println!("exec");
-                if exec(args_string[0].as_str(), args_addr.as_slice()) == -1 {
-                    println!("Error when executing autorun_testsuites!");
-                    ls("/");
-                    shutdown();
-                }
-                unreachable!();
-            } else {
-                waitpid(pid as usize, &mut exit_code);
-            }
-        }
-        shutdown();
-    }
-
-    pub fn auto_run_busybox() {
-        println!("!!!!!!!!!AUTORUN!!!!!!!!!");
-        let mut testsuits: Vec<&str> = Vec::new();
-        // testsuits.push("sh\0");
-        testsuits.push("echo\0 \"#### independent command test\"\0");
-        testsuits.push("basename\0 /aaa/bbb\0");
-        testsuits.push("cal\0");
-        testsuits.push("clear\0");
-        testsuits.push("expr\0 1\0 +\0 1\0");
-        testsuits.push("pwd\0");
-        testsuits.push("dirname\0 /aaa/bbb\0");
-        testsuits.push("du\0");
-        testsuits.push("uptime\0");
-        testsuits.push("date\0");
-        testsuits.push("false\0");
-        testsuits.push("true\0");
-        testsuits.push("uname\0");
-        testsuits.push("printf\0 \"abc\n\"\0");
-        testsuits.push("kill\0 10\0");
-
-        // file
-        testsuits.push("echo\0 \"#### file opration test\"\0");
-        testsuits.push("touch\0 test.txt\0");
-        testsuits.push("sort\0 test.txt\0 |\0 ./busybox\0 uniq\0");
-        testsuits.push("echo\0 \"hello world\"\0 >\0 test.txt\0");
-        testsuits.push("tail\0 test.txt\0");
-        testsuits.push("cat\0 test.txt\0");
-        testsuits.push("cut\0 -c\0 3\0 test.txt\0");
-        testsuits.push("od\0 test.txt\0");
-        testsuits.push("head\0 test.txt\0");
-        testsuits.push("hexdump\0 -C\0 test.txt\0");
-        testsuits.push("md5sum\0 test.txt\0");
-        testsuits.push("strings\0 test.txt\0");
-        testsuits.push("wc\0 test.txt\0");
-        testsuits.push("find\0 -name\0 \"busybox_cmd.txt\"\0");
-        testsuits.push("dmesg\0");
-        testsuits.push("echo\0 \"ccccccc\"\0 >>\0 test.txt\0");
-        testsuits.push("echo\0 \"bbbbbbb\"\0 >>\0 test.txt\0");
-        testsuits.push("echo\0 \"aaaaaaa\"\0 >>\0 test.txt\0");
-        testsuits.push("echo\0 \"2222222\"\0 >>\0 test.txt\0");
-        testsuits.push("echo\0 \"1111111\"\0 >>\0 test.txt\0");
-        testsuits.push("echo\0 \"bbbbbbb\"\0 >>\0 test.txt\0");
-        testsuits.push("stat\0 test.txt\0"); //?
-        testsuits.push("grep\0 hello\0 busybox_cmd.txt\0"); //ok
-
-        // dir test
-        testsuits.push("mkdir\0 test_dir\0");
-        testsuits.push("mv\0 test_dir\0 test\0");
-        testsuits.push("rmdir\0 test\0");
-        testsuits.push("which\0 ls\0");
-        testsuits.push("cp\0 busybox_cmd.txt\0 busybox_cmd.bak\0");
-        testsuits.push("rm\0 busybox_cmd.bak\0");
-
-        // half
-        testsuits.push("ps\0");
-        testsuits.push("df\0");
-        testsuits.push("[\0 -f\0 test.txt\0 ]\0");
-        testsuits.push("more\0 test.txt\0");
-        testsuits.push("rm\0 test.txt\0"); //ok
-        testsuits.push("free\0");
-        testsuits.push("hwclock\0");
-        testsuits.push("ls\0");
-
-        // lua: all pass
-        // testsuits.push("date.lua\0");
-        // testsuits.push("file_io.lua\0");
-        // testsuits.push("random.lua\0");
-        testsuits.push("remove.lua\0");
-        testsuits.push("sin30.lua\0");
-        // testsuits.push("max_min.lua\0");
-        testsuits.push("round_num.lua\0");
-        // testsuits.push("sort.lua\0");
-        testsuits.push("strings.lua\0");
-
-        testsuits.push("ash\0 -c\0 exit\0");
-        testsuits.push("sh\0 -c\0 exit\0");
-        testsuits.push("sleep\0 1\0");
-
-        let mut pipe_fd = [0usize; 2];
-
-        for programname_op in testsuits.iter() {
-            let need_pipe = (*programname_op).contains("|\0");
-            let mut is_lua = false;
-            let exec_path = {
-                if programname_op.contains("lua") {
-                    is_lua = true;
-                    String::from("lua\0")
-                } else {
-                    String::from("busybox\0")
-                }
-            };
-            let exec_op = exec_path.clone() + " " + programname_op;
-            // let exec_op = String::from("") + programname_op;
-            let mut exit_code = 0;
-            let args: Vec<&str> = exec_op.as_str().split(' ').collect();
-            // for i in 0..args.len() {
-            //     args[i].push('\0');
-            // }
-            let mut args_addr: Vec<*const u8> = Vec::new();
-            for i in 0..args.len() {
-                args_addr.push(args[i].as_ptr() as usize as *const u8);
-            }
-            args_addr.push(0 as *const u8);
-            // print!("args_addr.as_slice():{:?}",args_addr.as_slice());
-            // print!("ars:{:?}",args);
-
-            let mut exeop1 = String::new();
-            let mut exeop2 = String::new();
-            let mut args_addr1: Vec<*const u8> = Vec::new();
-            let mut args_addr2: Vec<*const u8> = Vec::new();
-            if need_pipe {
-                pipe(&mut pipe_fd);
-                let prog_op: Vec<&str> = programname_op.split(" |\0 ").collect();
-                exeop1 = exec_path.clone() + " " + prog_op[0];
-                exeop2.push_str(prog_op[1]);
-                args_addr1 = get_args_addr(&exeop1);
-                args_addr2 = get_args_addr(&exeop2);
-            }
-
-            let pid = fork();
-            if pid == 0 {
-                if need_pipe {
-                    print!("\n");
-                    close(1); // close stdout
-                    close(pipe_fd[0]); //close read end
-                    if exec(exec_path.as_str(), args_addr1.as_slice()) == -1 {
-                        println!("Error when executing autorun_testsuites!");
-                        shutdown();
-                    }
-                } else {
-                    if exec(exec_path.as_str(), args_addr.as_slice()) == -1 {
-                        println!("Error when executing autorun_testsuites!");
-                        shutdown();
-                    }
-                }
-                unreachable!();
-            } else {
-                if need_pipe {
-                    print!("\n");
-                    let pid2 = fork();
-                    if pid2 == 0 {
-                        close(0); // close stdin
-                        close(pipe_fd[1]); //clise write end
-                        if exec(exec_path.as_str(), args_addr2.as_slice()) == -1 {
-                            println!("Error when executing autorun_testsuites!");
-                            shutdown();
-                        }
-                        unreachable!();
-                    }
-                    waitpid(pid2 as usize, &mut exit_code);
-                }
-                waitpid(pid as usize, &mut exit_code);
-                let result = str::replace(*programname_op, "\0", "");
-                let result = str::replace(&result.as_str(), "\n", "\\n");
-                if result != "false" && exit_code != 0 {
-                    if is_lua {
-                        println!("testcase lua {} fail", result);
-                        panic!("lua fail");
-                    } else {
-                        println!("testcase busybox {} fail", result);
-                        panic!("busybox fail");
-                    }
-                } else {
-                    if is_lua {
-                        println!("testcase lua {} success", result);
-                    } else {
-                        println!("testcase busybox {} success", result);
-                    }
-                }
-            }
-        }
-        shutdown();
-    }
-
     pub fn print_state(&mut self) {
         println!("argc: {}\nstate: {}", self.argc, self.state);
         for i in 0..self.argc {
@@ -858,16 +503,76 @@ fn get_args_addr(op: &String) -> Vec<*const u8> {
     args_addr
 }
 
+
+// new add func 2022.04.28
+fn auto_run_phase1() -> bool{
+    let mut testsuits: Vec<&str> = Vec::new();
+    testsuits.push("times\0");
+    testsuits.push("gettimeofday\0");
+    testsuits.push("sleep\0");
+    testsuits.push("brk\0");
+    testsuits.push("clone\0");
+    testsuits.push("close\0");
+    testsuits.push("dup2\0");
+    testsuits.push("dup\0");
+    testsuits.push("execve\0");
+    testsuits.push("exit\0");
+    testsuits.push("fork\0");
+    testsuits.push("fstat\0");
+    testsuits.push("getcwd\0");
+    testsuits.push("getdents\0");
+    testsuits.push("getpid\0");
+    testsuits.push("getppid\0");
+    
+    testsuits.push("mmap\0");
+    testsuits.push("munmap\0");
+    testsuits.push("mount\0");
+
+    testsuits.push("open\0");
+    testsuits.push("pipe\0");
+    testsuits.push("read\0");
+    testsuits.push("umount\0");
+    testsuits.push("uname\0");
+    testsuits.push("wait\0");
+    testsuits.push("waitpid\0");
+    testsuits.push("write\0");
+    testsuits.push("yield\0");
+    testsuits.push("unlink\0");
+    testsuits.push("chdir\0");
+    
+    testsuits.push("mkdir_\0");
+    testsuits.push("openat\0");
+    for programname in testsuits.iter() {
+        let pid = fork();
+        let mut exit_code = 0;
+        let mut args_addr: Vec<*const u8> = Vec::new();
+        args_addr.push(0 as *const u8);
+        if pid == 0 {
+            // child process
+            if exec(programname, args_addr.as_slice()) == -1 {
+                println!("Error when executing run_testsuites!1");
+                return false;
+            }
+            unreachable!();
+        } else {
+            waitpid(pid as usize, &mut exit_code);
+        }
+    }
+    return false;
+}
+
 #[no_mangle]
 pub fn main() -> i32 {
     // delete init programs in fs
     //unlink("initproc\0");
     //unlink("user_shell\0");
     println!("Delete init programs initproc and user_shell in FS");
+    auto_run_phase1();
     // ArgMachine::auto_run_testsuites();
     let mut line: String;
     let mut shellmachine = InputMachine::new();
     let mut arg_machine = ArgMachine::new();
+
     loop {
         // println!{"<<<<<<<<<entering the loop of input"}
         let c = getchar();

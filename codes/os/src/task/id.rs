@@ -145,7 +145,6 @@ impl TaskUserRes {
         let mut process_inner = process.acquire_inner_lock();
         // alloc user stack
         let ustack_bottom = ustack_bottom_from_tid(self.ustack_base, self.tid);
-        println!("ustack_bottom is {:X}",ustack_bottom);
         let ustack_top = ustack_bottom + USER_STACK_SIZE;
         process_inner.memory_set.insert_framed_area(
             ustack_bottom.into(),

@@ -117,7 +117,7 @@ pub fn rust_main() -> ! {
     let mask: usize = 1 << 1;
     sbi_send_ipi(&mask as *const usize as usize);
     CORE2_FLAG.lock().set_in();
-    test();
+    // test();
     println!("tCore: run tasks");
     task::run_tasks();
     panic!("Unreachable in rust_main!");

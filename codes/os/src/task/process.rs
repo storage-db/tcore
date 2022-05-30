@@ -293,7 +293,6 @@ impl ProcessControlBlock {
         insert_into_pid2process(child.getpid(), Arc::clone(&child));
         // add this thread to scheduler
         add_task(task);
-        println!("fork is ok 3");
         child
     }
     pub fn is_signal_execute(&self) -> bool {

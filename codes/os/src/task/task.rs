@@ -75,7 +75,6 @@ impl TaskControlBlock {
         let trap_cx_ppn = res.trap_cx_ppn();
         let kstack = kstack_alloc();
         let kstack_top = kstack.get_top();
-        println!("kstack_top is {:x}", kstack_top);
         Self {
             process: Arc::downgrade(&process),
             kstack,

@@ -359,16 +359,19 @@ pub fn sys_fork() -> isize {
     let current_process = current_process();
     let new_process = current_process.fork();
     let new_pid = new_process.getpid();
-    println!("pid is {}", new_pid);
     // modify trap context of new_task, because it returns immediately after switching
-    let new_process_inner = new_process.acquire_inner_lock();
-    let task = new_process_inner.tasks[0].as_ref().unwrap();
-    let trap_cx = task.acquire_inner_lock().get_trap_cx();
+    // let new_process_inner = new_process.acquire_inner_lock();
+    // let task = new_process_inner.tasks[0].as_ref().unwrap();
+    // let trap_cx = task.acquire_inner_lock().get_trap_cx();
     // we do not have to move to next instruction since we have done it before
     // for child process, fork returns 0
     gdb_println!(SYSCALL_ENABLE, "sys_fork() = {}", new_pid as isize);
-    println!("fork  is ok 4");
-    trap_cx.x[10] = 0;
+    // trap_cx.x[10] = 0;
+    unsafe {
+        asm!("sfence.vma");
+        asm!("fence.i");
+    }
+
     new_pid as isize
   
 }
@@ -387,14 +390,21 @@ pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
             args = args.add(1);
         }
     }
+
+
     let process=current_process();
     let inner = process.acquire_inner_lock();
     if let Some(app_inode) = open(inner.current_path.as_str(),path.as_str(),OpenFlags::RDONLY, DiskInodeType::File) {
+        drop(inner);
         let all_data = app_inode.read_all();
         let process = current_process();
         let argc = args_vec.len();
         process.exec(all_data.as_slice(), args_vec);
-        println!("exec is ok 2"); 
+        unsafe {
+            asm!("sfence.vma");
+            asm!("fence.i");
+        }
+ 
         // return argc because cx.x[10] will be covered with it later
         argc as isize
     } else {
