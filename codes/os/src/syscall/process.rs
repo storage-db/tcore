@@ -332,25 +332,25 @@ pub fn sys_getegid() -> isize {
 //     current_task().unwrap().pid.0 as isize
 // }
 
-// pub fn sys_sbrk(grow_size: isize, is_shrink: usize) -> isize {
-//     let current_va = current_task().unwrap().grow_proc(grow_size) as isize;
-//     current_va
-// }
-
-// pub fn sys_brk(brk_addr: usize) -> isize{
-//     let mut addr_new = 0;
-//     if brk_addr == 0 {
-//         addr_new = sys_sbrk(0, 0) as usize;
-//     }
-//     else{
-//         let former_addr = current_task().unwrap().grow_proc(0);
-//         let grow_size: isize = (brk_addr - former_addr) as isize;
-//         addr_new = current_task().unwrap().grow_proc(grow_size);
-//     }
+pub fn sys_sbrk(grow_size: isize, is_shrink: usize) -> isize {
+    let current_va = current_process().grow_proc(grow_size) as isize;
+    current_va
+}
+pub fn sys_brk(brk_addr: usize) -> isize{
+    let mut addr_new = 0;
+    if brk_addr == 0 {
+        addr_new = sys_sbrk(0, 0) as usize;
+    }
+    else{
+        let former_addr = current_process().grow_proc(0);
+        let grow_size: isize = (brk_addr - former_addr) as isize;
+        addr_new = current_process().grow_proc(grow_size);
+    }
     
-//     gdb_println!(SYSCALL_ENABLE,"sys_brk(0x{:X}) = 0x{:X}", brk_addr, addr_new);
-//     addr_new as isize
-// }
+    gdb_println!(SYSCALL_ENABLE,"sys_brk(0x{:X}) = 0x{:X}", brk_addr, addr_new);
+    addr_new as isize
+}
+
 
 //long clone(unsigned long flags, void *child_stack,
 //    int *ptid, int *ctid,
