@@ -476,4 +476,22 @@ impl ProcessControlBlock {
         // println!("lazy_mmap");
         return lazy_result;
     }
+    pub fn grow_proc(&self, grow_size: isize) -> usize {
+        if grow_size > 0 {
+            let growed_addr: usize = self.inner.lock().heap_pt + grow_size as usize;
+            let limit = self.inner.lock().heap_start + USER_HEAP_SIZE;
+            if growed_addr > limit {
+                panic!("process doesn't have enough memsize to grow! {} {} {} {}", limit, self.inner.lock().heap_pt, growed_addr, self.pid.0);
+            }
+            self.inner.lock().heap_pt = growed_addr;
+        }
+        else {
+            let shrinked_addr: usize = self.inner.lock().heap_pt + grow_size as usize;
+            if shrinked_addr < self.inner.lock().heap_start {
+                panic!("Memory shrinked to the lowest boundary!")
+            }
+            self.inner.lock().heap_pt = shrinked_addr;
+        }
+        return self.inner.lock().heap_pt;
+    }
 }
