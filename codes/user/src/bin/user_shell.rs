@@ -504,7 +504,6 @@ fn get_args_addr(op: &String) -> Vec<*const u8> {
 }
 
 
-// new add func 2022.04.28
 fn auto_run_phase1() -> bool{
     let mut testsuits: Vec<&str> = Vec::new();
     testsuits.push("times\0");
@@ -523,11 +522,11 @@ fn auto_run_phase1() -> bool{
     testsuits.push("getdents\0");
     testsuits.push("getpid\0");
     testsuits.push("getppid\0");
-    
+    testsuits.push("mkdir_\0");
     testsuits.push("mmap\0");
     testsuits.push("munmap\0");
     testsuits.push("mount\0");
-
+    testsuits.push("openat\0");
     testsuits.push("open\0");
     testsuits.push("pipe\0");
     testsuits.push("read\0");
@@ -539,10 +538,8 @@ fn auto_run_phase1() -> bool{
     testsuits.push("yield\0");
     testsuits.push("unlink\0");
     testsuits.push("chdir\0");
-    
-    testsuits.push("mkdir_\0");
-    testsuits.push("openat\0");
-    for programname in testsuits.iter() {
+
+    for programname in testsuits.iter(){
         let pid = fork();
         let mut exit_code = 0;
         let mut args_addr: Vec<*const u8> = Vec::new();
@@ -558,23 +555,18 @@ fn auto_run_phase1() -> bool{
             waitpid(pid as usize, &mut exit_code);
         }
     }
+
     return false;
 }
 
 #[no_mangle]
 pub fn main() -> i32 {
-    // delete init programs in fs
-    //unlink("initproc\0");
-    //unlink("user_shell\0");
-    println!("Delete init programs initproc and user_shell in FS");
     auto_run_phase1();
-    // ArgMachine::auto_run_testsuites();
     let mut line: String;
     let mut shellmachine = InputMachine::new();
     let mut arg_machine = ArgMachine::new();
 
     loop {
-        // println!{"<<<<<<<<<entering the loop of input"}
         let c = getchar();
         let is_exec = shellmachine.operate(c as char);
         if is_exec {
@@ -644,3 +636,4 @@ pub fn main() -> i32 {
         }
     }
 }
+

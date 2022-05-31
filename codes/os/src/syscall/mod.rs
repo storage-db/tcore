@@ -181,12 +181,12 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
         SYSCALL_YIELD => sys_yield(),
         SYSCALL_KILL => sys_kill(args[0], args[1] as u32),
         //SYSCALL_SIGACTION => sys_sigaction(args[0] as isize, args[1] as *mut usize, args[2] as *mut usize),
-       // SYSCALL_TIMES => sys_times(args[0] as *mut i64),
+        SYSCALL_TIMES => sys_times(args[0] as *mut i64),
         SYSCALL_UNAME => sys_uname(args[0] as *mut u8),
         // SYSCALL_GETRUSAGE => sys_getrusage(args[0] as isize, args[1] as *mut u8),
         SYSCALL_GET_TIME_OF_DAY => sys_get_time_of_day(args[0] as *mut u64),
         //SYSCALL_SBRK => sys_sbrk(args[0] as isize, args[1] as usize),
-        //SYSCALL_BRK => sys_brk(args[0]),
+        SYSCALL_BRK => sys_brk(args[0]),
 
         SYSCALL_GETPID => sys_getpid(),
         SYSCALL_GETPPID => sys_getppid(),
@@ -211,12 +211,12 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
             }
             sys_exec(args[0] as *const u8, args[1] as *const usize)
         },
-        // SYSCALL_WAIT4 => {
-        //     unsafe {
-        //         //llvm_asm!("sfence.vma" :::: "volatile");
-        //     }
-        //     sys_wait4(args[0] as isize, args[1] as *mut i32, args[2] as isize)
-        // },
+        SYSCALL_WAIT4 => {
+            // unsafe {
+            //     //llvm_asm!("sfence.vma" :::: "volatile");
+            // }
+            sys_wait4(args[0] as isize, args[1] as *mut i32, args[2] as isize)
+        },
         SYSCALL_PRLIMIT => 0,
         
         SYSCALL_RENAMEAT2 => sys_renameat2(
@@ -224,7 +224,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
             args[2] as isize, args[3] as *const u8, args[4] as u32
         ),
         
-        // SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
+        SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
         SYSCALL_MMAP => {
             unsafe {
                 //llvm_asm!("sfence.vma" :::: "volatile");

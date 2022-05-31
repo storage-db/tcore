@@ -405,9 +405,9 @@ bitflags! {
         const RDWR = 1 << 1;
         const CREATE = 1 << 6;
         const TRUNC = 1 << 10;
-        const DIRECTROY = 0200000;
-        const LARGEFILE  = 0100000;
-        const CLOEXEC = 02000000;
+        const DIRECTROY = 0x200000;
+        const LARGEFILE  = 0x100000;
+        const CLOEXEC = 0x2000000;
     }
 }
 

@@ -458,9 +458,10 @@ impl ProcessControlBlock {
     }
     pub fn munmap(&self, start: usize, len: usize) -> isize {
         let mut inner = self.acquire_inner_lock();
+        let start_vpn = VirtAddr::from(start).floor();
         inner
             .memory_set
-            .remove_area_with_start_vpn(VirtAddr::from(start).into());
+            .remove_area_with_start_vpn(VirtAddr::from(start_vpn).into());
         inner.mmap_area.remove(start, len)
     }
     pub fn lazy_mmap(&self, stval: usize, is_load: bool) -> isize {
@@ -475,5 +476,23 @@ impl ProcessControlBlock {
         }
         // println!("lazy_mmap");
         return lazy_result;
+    }
+    pub fn grow_proc(&self,grow_size:isize) -> usize {
+        if grow_size > 0 {
+            let growed_addr: usize = self.inner.lock().heap_pt + grow_size as usize;
+            let limit = self.inner.lock().heap_start + USER_HEAP_SIZE;
+            if growed_addr > limit {
+                panic!("process doesn't have enough ");
+            }
+            self.inner.lock().heap_pt = growed_addr;
+        }
+        else {
+            let shrinked_addr: usize = self.inner.lock().heap_pt + grow_size as usize;
+            if shrinked_addr < self.inner.lock().heap_start {
+                panic!("Memory shrinked");
+            }
+            self.inner.lock().heap_pt = shrinked_addr;
+        }
+        return self.inner.lock().heap_pt;
     }
 }

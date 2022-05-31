@@ -35,13 +35,6 @@ pub fn sys_yield() -> isize {
     0
 }
 pub fn sys_times(time: *mut i64) -> isize {
-    // struct tms              
-    // {                     
-    //     long tms_utime;  
-    //     long tms_stime;  
-    //     long tms_cutime; 
-    //     long tms_cstime; 
-    // };
     let token = current_user_token();
     let sec = get_time_us() as i64;
     *translated_refmut(token, time) = sec;
@@ -332,25 +325,27 @@ pub fn sys_getegid() -> isize {
 //     current_task().unwrap().pid.0 as isize
 // }
 
-// pub fn sys_sbrk(grow_size: isize, is_shrink: usize) -> isize {
-//     let current_va = current_task().unwrap().grow_proc(grow_size) as isize;
-//     current_va
-// }
+pub fn sys_sbrk(grow_size: isize, is_shrink: usize) -> isize {
+    let current_va = current_process().grow_proc(grow_size) as isize;
+    current_va
+}
 
-// pub fn sys_brk(brk_addr: usize) -> isize{
-//     let mut addr_new = 0;
-//     if brk_addr == 0 {
-//         addr_new = sys_sbrk(0, 0) as usize;
-//     }
-//     else{
-//         let former_addr = current_task().unwrap().grow_proc(0);
-//         let grow_size: isize = (brk_addr - former_addr) as isize;
-//         addr_new = current_task().unwrap().grow_proc(grow_size);
-//     }
+pub fn sys_brk(brk_addr: usize) -> isize{
+    let mut addr_new = 0;
+    if brk_addr == 0 {
+        addr_new = sys_sbrk(0, 0) as usize;
+    }
+    else{
+        let former_addr = current_process().grow_proc(0);
+        let grow_size: isize = (brk_addr - former_addr) as isize;
+        addr_new = current_process().grow_proc(grow_size);
+    }
     
-//     gdb_println!(SYSCALL_ENABLE,"sys_brk(0x{:X}) = 0x{:X}", brk_addr, addr_new);
-//     addr_new as isize
-// }
+    gdb_println!(SYSCALL_ENABLE,"sys_brk(0x{:X}) = 0x{:X}", brk_addr, addr_new);
+    addr_new as isize
+}
+
+
 
 //long clone(unsigned long flags, void *child_stack,
 //    int *ptid, int *ctid,
@@ -360,13 +355,13 @@ pub fn sys_fork() -> isize {
     let new_process = current_process.fork();
     let new_pid = new_process.getpid();
     // modify trap context of new_task, because it returns immediately after switching
-    // let new_process_inner = new_process.acquire_inner_lock();
-    // let task = new_process_inner.tasks[0].as_ref().unwrap();
-    // let trap_cx = task.acquire_inner_lock().get_trap_cx();
+    let new_process_inner = new_process.acquire_inner_lock();
+    let task = new_process_inner.tasks[0].as_ref().unwrap();
+    let trap_cx = task.acquire_inner_lock().get_trap_cx();
     // we do not have to move to next instruction since we have done it before
     // for child process, fork returns 0
     gdb_println!(SYSCALL_ENABLE, "sys_fork() = {}", new_pid as isize);
-    // trap_cx.x[10] = 0;
+    trap_cx.x[10] = 0;
     unsafe {
         asm!("sfence.vma");
         asm!("fence.i");
@@ -408,60 +403,61 @@ pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
         // return argc because cx.x[10] will be covered with it later
         argc as isize
     } else {
+        drop(inner);
         -1
     }
 }
 
-// pub fn sys_wait4(pid: isize, wstatus: *mut i32, option: isize) -> isize {
-//     if option != 0 {
-//         panic!{"Extended option not support yet..."};
-//     }
+pub fn sys_wait4(pid: isize, wstatus: *mut i32, option: isize) -> isize {
+    if option != 0 {
+        panic!{"Extended option not support yet..."};
+    }
 
-//     loop {
-//         let task = current_task().unwrap();
-//         let mut inner = task.acquire_inner_lock();
-//         if inner.children
-//             .iter()
-//             .find(|p| {pid == -1 || pid as usize == p.getpid()})
-//             .is_none() {
-//             return -1;
-//             // ---- release current PCB lock
-//             }
-//         let waited = inner.children
-//             .iter()
-//             .enumerate()
-//             .find(|(_, p)| {
-//                 // ++++ temporarily hold child PCB lock
-//                 p.acquire_inner_lock().is_zombie() && (pid == -1 || pid as usize == p.getpid())
-//                 // ++++ release child PCB lock
-//             });
-//         if let Some((idx,_)) = waited {
-//             let waited_child = inner.children.remove(idx);
-//             // confirm that child will be deallocated after being removed from children list
-//             // println!("[wait4]:pid {} child_pid {} ", task.pid.0, waited_child.getpid());
-//             assert_eq!(Arc::strong_count(&waited_child), 1);
-//             let found_pid = waited_child.getpid();
-//             // ++++ temporarily hold child lock
-//             let exit_code = waited_child.acquire_inner_lock().exit_code;
-//             let ret_status = exit_code << 8;
-//             if (wstatus as usize) != 0{
-//                 *translated_refmut(inner.memory_set.token(), wstatus) = ret_status;
-//             }
-//             // println!("=============The pid being waited is {}===================", pid);
-//             // println!("=============The exit code of waiting_pid is {}===========", exit_code);
-//             gdb_println!(SYSCALL_ENABLE, "sys_wait4(pid: {}, wstatus: {}, option: {}) = {}", pid, ret_status, option, found_pid);
-//             return found_pid as isize;
-//         } else {
-//             drop(inner);
-//             drop(task);
-//             gdb_print!(BLANK_ENABLE," ");
-//             //print!("\n");
-//             //print!(" ");
-//             suspend_current_and_run_next();
-//             // continue;
-//         }
-//     }
-// }
+    loop {
+        let process = current_process();
+        let mut inner = process.acquire_inner_lock();
+        if inner.children
+            .iter()
+            .find(|p| {pid == -1 || pid as usize == p.getpid()})
+            .is_none() {
+            return -1;
+            // ---- release current PCB lock
+            }
+        let waited = inner.children
+            .iter()
+            .enumerate()
+            .find(|(_, p)| {
+                // ++++ temporarily hold child PCB lock
+                p.acquire_inner_lock().is_zombie && (pid == -1 || pid as usize == p.getpid())
+                // ++++ release child PCB lock
+            });
+        if let Some((idx,_)) = waited {
+            let waited_child = inner.children.remove(idx);
+            // confirm that child will be deallocated after being removed from children list
+            // println!("[wait4]:pid {} child_pid {} ", task.pid.0, waited_child.getpid());
+            assert_eq!(Arc::strong_count(&waited_child), 1);
+            let found_pid = waited_child.getpid();
+            // ++++ temporarily hold child lock
+            let exit_code = waited_child.acquire_inner_lock().exit_code;
+            let ret_status = exit_code << 8;
+            if (wstatus as usize) != 0{
+                *translated_refmut(inner.memory_set.token(), wstatus) = ret_status;
+            }
+            // println!("=============The pid being waited is {}===================", pid);
+            // println!("=============The exit code of waiting_pid is {}===========", exit_code);
+            gdb_println!(SYSCALL_ENABLE, "sys_wait4(pid: {}, wstatus: {}, option: {}) = {}", pid, ret_status, option, found_pid);
+            return found_pid as isize;
+        } else {
+            drop(inner);
+            drop(process);
+            gdb_print!(BLANK_ENABLE," ");
+            //print!("\n");
+            //print!(" ");
+            suspend_current_and_run_next();
+            // continue;
+        }
+    }
+}
 
 /// If there is not a child process whose pid is same as given, return -1.
 /// Else if there is a child process but it is still running, return -2.
@@ -478,6 +474,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         return -1;
         // ---- release current PCB
     }
+
     let pair = inner.children.iter().enumerate().find(|(_, p)| {
         // ++++ temporarily access child PCB exclusively
         p.acquire_inner_lock().is_zombie && (pid == -1 || pid as usize == p.getpid())
@@ -492,7 +489,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         let exit_code = child.acquire_inner_lock().exit_code;
         // ++++ release child PCB
         *translated_refmut(inner.memory_set.token(), exit_code_ptr) = exit_code;
-        found_pid as isize
+        return found_pid as isize;
     } else {
         -2
     }
@@ -502,19 +499,31 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 // not support full flags: MAP_FIXED
 // WARNING: if mmap len is 0, we will alloc one page for it, which actually should be forbidden.
 
+
+#[allow(unused)]
+pub fn aligned_up(addr: usize) -> usize {
+    (addr + PAGE_SIZE - 1) / PAGE_SIZE * PAGE_SIZE
+}
+
+
 pub fn sys_mmap(start: usize, len: usize, prot: usize, flags: usize, fd: isize, off: usize) -> isize {
+
     let process = current_process();
-    let mut adjust_len = len;
-    if adjust_len == 0{
-        adjust_len = PAGE_SIZE;
-    }
-    let result_addr = process.mmap(start, adjust_len, prot, flags, fd, off);
-    gdb_println!(SYSCALL_ENABLE,"sys_mmap(0x{:X},{},{},0x{:X},{},{}) = 0x{:X}",start, len, prot, flags, fd, off, result_addr);
+    let adr = process.acquire_inner_lock().mmap_area.mmap_top.0;
+    println!("adr = {}",adr);
+    let start = aligned_up(adr);
+    let aligned_len = aligned_up(len);
+
+    let result_addr = process.mmap(start, aligned_len, prot, flags, fd, off);
+    gdb_println!(SYSCALL_ENABLE,"sys_mmap(0x{:X},{},{},0x{:X},{},{}) = 0x{:X}",start, aligned_len, prot, flags, fd, off, result_addr);
     return result_addr as isize;
 }
 
+
+
 //use crate::mm::HEAP_ALLOCATOR;
 pub fn sys_munmap(start: usize, len: usize) -> isize {
+    let start = aligned_up(start);
     let process = current_process();
     let ret = process.munmap(start, len);
     ret
