@@ -1,7 +1,7 @@
 # Building
 TARGET := riscv64imac-unknown-none-elf
 MODE := release
-KERNEL_ELF := target/$(TARGET)/$(MODE)/tCore
+KERNEL_ELF := target/$(TARGET)/$(MODE)/os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
 FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
@@ -16,7 +16,7 @@ endif
 
 SDCARD := /dev/sdb
 APPS := ../user/src/bin/*
-TOP := ../../k210.bin
+TOP := ../../os.bin
 
 # BOARD
 BOARD ?= qemu
@@ -49,7 +49,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 DISASM ?= -x
 
 # build: env $(KERNEL_BIN) $(FS_IMG) fat32
-build: $(KERNEL_BIN)
+build: env $(KERNEL_BIN)
 
 env:
 	rustup override set nightly-2021-05-10
@@ -112,14 +112,13 @@ endif
 
 
 monitor:
-	riscv64-unknown-elf-gdb -ex 'file target/riscv64imac-unknown-none-elf/release/tCore' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
+	riscv64-unknown-elf-gdb -ex 'file target/riscv64imac-unknown-none-elf/release/os' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
 
-gdb: build
-	@qemu-system-riscv64 -machine virt -nographic -bios ../bootloader/rustsbi-qemu.bin -device loader,\
-	file=target/riscv64imac-unknown-none-elf/release/tCore,addr=0x80200000 -drive \
+gdb:
+	@qemu-system-riscv64 -machine virt -nographic -bios $(BOOTLOADER) -device loader,\
+	file=target/riscv64imac-unknown-none-elf/release/os,addr=0x80200000 -drive \
 	file=$(U_FAT32),if=none,format=raw,id=x0 \
 	-device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0 -smp threads=2 -S -s
-
 
 runsimple:
 	@qemu-system-riscv64 \
