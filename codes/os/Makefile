@@ -82,7 +82,7 @@ fsimg-format:
 kernel:
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build --release --features "board_$(BOARD)"
+	@cargo build --offline --release --features "board_$(BOARD)"
 	@rm src/linker.ld
 
 clean:
