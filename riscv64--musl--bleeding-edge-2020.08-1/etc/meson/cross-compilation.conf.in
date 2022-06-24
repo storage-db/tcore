@@ -1,0 +1,29 @@
+# Note: Buildroot's and Meson's terminologies differ about the meaning
+# of 'build', 'host' and 'target':
+# - Buildroot's 'host' is Meson's 'build'
+# - Buildroot's 'target' is Meson's 'host'
+
+[binaries]
+c = '/opt/riscv64--musl--bleeding-edge-2020.08-1/bin/riscv64-buildroot-linux-musl-gcc'
+cpp = '/opt/riscv64--musl--bleeding-edge-2020.08-1/bin/riscv64-buildroot-linux-musl-g++'
+ar = '/opt/riscv64--musl--bleeding-edge-2020.08-1/bin/riscv64-buildroot-linux-musl-ar'
+strip = '/opt/riscv64--musl--bleeding-edge-2020.08-1/bin/riscv64-buildroot-linux-musl-strip'
+pkgconfig = '/opt/riscv64--musl--bleeding-edge-2020.08-1/bin/pkgconf'
+g-ir-compiler = '/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/usr/bin/g-ir-compiler'
+g-ir-scanner = '/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/usr/bin/g-ir-scanner'
+
+[properties]
+needs_exe_wrapper = true
+c_args = ['-D_LARGEFILE_SOURCE', '-D_LARGEFILE64_SOURCE', '-D_FILE_OFFSET_BITS=64', '-Os'@PKG_TARGET_CFLAGS@]
+c_link_args = [@PKG_TARGET_CFLAGS@]
+cpp_args = ['-D_LARGEFILE_SOURCE', '-D_LARGEFILE64_SOURCE', '-D_FILE_OFFSET_BITS=64', '-Os'@PKG_TARGET_CFLAGS@]
+cpp_link_args = [@PKG_TARGET_CFLAGS@]
+sys_root = '/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot'
+pkg_config_libdir = '/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/usr/lib/pkgconfig:/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/usr/share/pkgconfig'
+pkg_config_static = '$(if $(BR2_STATIC_LIBS),true,false)'
+
+[host_machine]
+system = 'linux'
+cpu_family ='riscv64'
+cpu = ''
+endian = 'little'

@@ -1,5 +1,5 @@
-MUSL_LIB?=/opt/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/lib64/
-PREFIX?=riscv64-buildroot-linux-musl-
+MUSL_LIB?=/home/wakk/testsuits-for-oskernel/riscv64--musl--bleeding-edge-2020.08-1/riscv64-buildroot-linux-musl/sysroot/lib64
+PREFIX?=/home/wakk/testsuits-for-oskernel/riscv64--musl--bleeding-edge-2020.08-1/bin/riscv64-linux-
 CC=$(PREFIX)gcc
 OBJCOPY=$(PREFIX)objcopy
 # CC=musl-gcc
