@@ -83,12 +83,12 @@ pub fn sys_getrusage(who: isize, usage: *mut u8) -> isize {
 
 pub fn sys_uname(buf: *mut u8) -> isize {
     // let uname = utsname {
-    //     sysname: b"UltraOS\0",
-    //     nodename:  b"UltraOS\0",
+    //     sysname: b"TCore\0",
+    //     nodename:  b"TCore\0",
     //     release:  b"Alpha\0",
     //     version:  b"1.1\0",
     //     machine:  b"RISC-V64\0",
-    //     domainname: b"UltraTEAM/UltraOS\0"
+    //     domainname: b"TCoreTEAM/TCore\0"
     // };
     let token = current_user_token();
     let mut buf_vec = translated_byte_buffer(token, buf, size_of::<utsname>());
@@ -330,7 +330,7 @@ pub fn sys_getpid() -> isize {
 
 // For user, pid is tgid in kernel
 pub fn sys_getppid() -> isize {
-    let mut search_task: Arc<TaskControlBlock> = current_task().unwrap();
+    let mut search_task: Arc<ProcessControlBlock> = current_task().unwrap();
     search_task = search_task.get_parent().unwrap();
     gdb_println!(SYSCALL_ENABLE,"sys_getppid() = {}",search_task.tgid);
     search_task.tgid as isize

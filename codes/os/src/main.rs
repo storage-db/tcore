@@ -94,7 +94,7 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     let core = id();
     println!("core {} is running",core);
     if core != 0 {
-        //loop{}
+        loop{}
         /// WARNING: Multicore mode only supports customized RustSBI platform, especially not including OpenSBI
         /// We use OpenSBI in qemu and customized RustSBI in k210, if you want to try Multicore mode, you have to
         /// try to switch to RustSBI in qemu and try to wakeup, which needs some effort and you can refer to docs.
@@ -112,21 +112,22 @@ pub fn rust_main(_hartid: usize, device_tree_paddr: usize) -> ! {
     clear_bss();
     mm::init();
     mm::remap_test();
-    println!("UltraOS: memory initialized");
+    println!("TCore: memory initialized");
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    println!("UltraOS: interrupt initialized");
+    println!("TCore: interrupt initialized");
     fs::init_rootfs();
-    println!("UltraOS: fs initialized");
+    println!("TCore: fs initialized");
     task::add_initproc();
-    println!("UltraOS: task initialized");
-    println!("UltraOS: wake other cores");
+    println!("TCore: task initialized");
+    println!("TCore: wake other cores");
     let mask:usize = 1 << 1;
     sbi_send_ipi(&mask as *const usize as usize);
     // CORE2_FLAG.lock().set_in();
     // test();
-    println!("UltraOS: run tasks");
+    //sys_gputest();
+    println!("TCore: run tasks");
     task::run_tasks();
     panic!("Unreachable in rust_main!");
 }

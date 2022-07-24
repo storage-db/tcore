@@ -23,7 +23,7 @@ use crate::utils::*;
 use crate::timer::get_timeval;
 use super::info::*;
 use super::{RLimit, TaskContext};
-use super::{PidHandle, pid_alloc, KernelStack, RUsage, ITimerVal};
+use super::{idHandle, pid_alloc, KernelStack, RUsage, ITimerVal,idAllocator};
 use alloc::sync::{Weak, Arc};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -49,24 +49,25 @@ pub struct ProcAddress {
     pub clear_child_tid: usize,
 }
 
-pub struct TaskControlBlock {
+pub struct ProcessControlBlock {
     // immutable
-    pub pid: PidHandle,
+    pub pid: idHandle,
     pub tgid: usize,
     pub kernel_stack: KernelStack,
     // mutable
-    inner: Mutex<TaskControlBlockInner>,
+    inner: Mutex<ProcessControlBlockInner>,
 }
 
 pub type FdTable =  Vec<Option<FileDescripter>>;
-pub struct TaskControlBlockInner {
+pub struct ProcessControlBlockInner {
     // task
     pub trap_cx_ppn: PhysPageNum,
     pub task_cx_ptr: usize,
     pub task_status: TaskStatus,
-    pub parent: Option<Weak<TaskControlBlock>>,
-    pub children: Vec<Arc<TaskControlBlock>>,
+    pub parent: Option<Weak<ProcessControlBlock>>,
+    pub children: Vec<Arc<ProcessControlBlock>>,
     pub exit_code: i32,
+    pub task_res_allocator: idAllocator,
     // memory
     pub memory_set: MemorySet,
     pub base_size: usize,
@@ -92,7 +93,7 @@ impl ProcAddress {
     }
 }
 
-impl TaskControlBlockInner {
+impl ProcessControlBlockInner {
     pub fn get_task_cx_ptr2(&self) -> *const usize {
         &self.task_cx_ptr as *const usize
     }
@@ -105,6 +106,13 @@ impl TaskControlBlockInner {
     }
     fn get_status(&self) -> TaskStatus {
         self.task_status
+    }
+    pub fn alloc_tid(&mut self) -> usize {
+        self.task_res_allocator.alloc().0
+    }
+
+    pub fn dealloc_tid(&mut self, tid: usize) {
+        self.task_res_allocator.dealloc(tid)
     }
     pub fn is_zombie(&self) -> bool {
         self.get_status() == TaskStatus::Zombie
@@ -159,13 +167,13 @@ impl TaskControlBlockInner {
 
 
 
-impl TaskControlBlock {
-    pub fn acquire_inner_lock(&self) -> MutexGuard<TaskControlBlockInner> {
+impl ProcessControlBlock {
+    pub fn acquire_inner_lock(&self) -> MutexGuard<ProcessControlBlockInner> {
         // println!{"acquiring lock..."}
         self.inner.lock()
     }
     
-    pub fn get_parent(&self) -> Option<Arc<TaskControlBlock>> {
+    pub fn get_parent(&self) -> Option<Arc<ProcessControlBlock>> {
         let inner = self.inner.lock();
         inner.parent.as_ref().unwrap().upgrade()
     }
@@ -290,7 +298,7 @@ impl TaskControlBlock {
             pid: pid_handle,
             tgid,
             kernel_stack,
-            inner: Mutex::new(TaskControlBlockInner {
+            inner: Mutex::new(ProcessControlBlockInner {
                 address: ProcAddress::new(),
                 rusage: RUsage::new(),
                 itimer: ITimerVal::new(),
@@ -313,6 +321,7 @@ impl TaskControlBlock {
                 parent: None,
                 children: Vec::new(),
                 exit_code: 0,
+                task_res_allocator: idAllocator::new(),
                 fd_table: vec![
                     // 0 -> stdin
                     Some( FileDescripter::new(
@@ -528,7 +537,7 @@ impl TaskControlBlock {
         // **** release current PCB lock
     }
     
-    pub fn fork(self: &Arc<TaskControlBlock>, is_create_thread: bool) -> Arc<TaskControlBlock> {
+    pub fn fork(self: &Arc<ProcessControlBlock>, is_create_thread: bool) -> Arc<ProcessControlBlock> {
         // ---- hold parent PCB lock
         let mut parent_inner = self.acquire_inner_lock();
         // println!{"trap context of pid{}: {:X}", self.pid.0, parent_inner.trap_cx_ppn.0}
@@ -567,11 +576,11 @@ impl TaskControlBlock {
             }
         }
         //println!("fork: parent_inner.current_inode = {}",parent_inner.current_inode);
-        let task_control_block = Arc::new(TaskControlBlock {
+        let task_control_block = Arc::new(ProcessControlBlock {
             pid: pid_handle,
             tgid,
             kernel_stack,
-            inner: Mutex::new(TaskControlBlockInner {
+            inner: Mutex::new(ProcessControlBlockInner {
                 address: ProcAddress::new(),
                 rusage: RUsage::new(),
                 itimer: ITimerVal::new(),
@@ -588,6 +597,7 @@ impl TaskControlBlock {
                 parent: Some(Arc::downgrade(self)),
                 children: Vec::new(),
                 exit_code: 0,
+                task_res_allocator: idAllocator::new(),
                 fd_table: new_fd_table,
                 current_path: parent_inner.current_path.clone(),
                 resource_list: parent_inner.resource_list.clone(),

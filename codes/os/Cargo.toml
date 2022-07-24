@@ -1,10 +1,10 @@
 [package]
-name = "UltraOS"
+name = "TCore"
 version = "0.1.1"
 authors = ["LoanCold <loancold@foxmail.com>", "Haochen Gong <1527198893@qq.com>", "Xiangyu REN"]
 edition = "2018"
 
-# The newest versions are described below, but they are not compatible with UltraOS's newest version.
+# The newest versions are described below, but they are not compatible with TCore's newest version.
 # riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
 # virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers" }
 # k210-pac = { git = "https://github.com/wyfcyx/k210-pac" }

@@ -6,7 +6,8 @@
 // //#define O_CREATE 0x200
 // pub const O_CREATE: usize = 0x40;
 // pub const O_DIRECTORY: usize = 0x0200000;
-
+//用户栈大小
+//pub const USER_STACK_SIZE: usize = PAGE_SIZE * 4;
 // for mmap
 pub const PROT_NONE: usize = 0;
 pub const PROT_READ: usize = 1;
@@ -26,7 +27,7 @@ pub const MAP_FAILED: isize = -1;
 // Memory management
 pub const PAGE_SIZE: usize = 0x1000;//should not change
 pub const PAGE_SIZE_BITS: usize = 0xc;
-pub const USER_STACK_SIZE_MIN: usize = PAGE_SIZE * 4;
+pub const THREAD_STACK_SIZE_MIN: usize = PAGE_SIZE * 4;
 pub const USER_STACK_SIZE: usize = PAGE_SIZE * 35;
 pub const SIGNAL_STACK_SIZE: usize = PAGE_SIZE;
 pub const USER_HEAP_SIZE: usize = PAGE_SIZE * 64;
@@ -36,6 +37,10 @@ pub const KERNEL_HEAP_SIZE: usize = PAGE_SIZE * 0x200;
 pub const MEMORY_START: usize = 0x80200000;
 pub const MEMORY_END: usize = 0x80800000;
 
+
+/// 进程用户栈基址
+pub const USER_STACK_BASE: usize = 0xf000_0000;
+
 pub const KMMAP_BASE: usize = 0x90000000;
 pub const MMAP_BASE: usize = 0x60000000;
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
@@ -43,6 +48,9 @@ pub const SIGNAL_TRAMPOLINE: usize = 0x80000000 - PAGE_SIZE;
 pub const TRAP_CONTEXT: usize = SIGNAL_TRAMPOLINE - PAGE_SIZE;
 pub const USER_STACK: usize = TRAP_CONTEXT - PAGE_SIZE;
 pub const USER_SIGNAL_STACK: usize = USER_STACK - USER_STACK_SIZE - PAGE_SIZE;
+
+
+pub const TRAP_CONTEXT_BASE: usize = TRAMPOLINE - PAGE_SIZE;
 // here, we usually leave one page as guard page
 
 // Execution of programs
@@ -85,6 +93,7 @@ pub const CLOCK_FREQ: usize = 12500000;
 
 #[cfg(feature = "board_qemu")]
 pub const MMIO: &[(usize, usize)] = &[
+    (0x10002000, 0x1000),
     (0x10001000, 0x1000),
     (0x10000000, 0x1000),
 ];

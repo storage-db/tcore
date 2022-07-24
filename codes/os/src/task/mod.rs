@@ -1,12 +1,12 @@
 mod context;
 mod switch;
-mod task;
+mod process;
 mod manager;
 mod processor;
-mod pid;
+mod id;
 mod info;
 mod resource;
-
+mod thread;
 use crate::fs::{open, OpenFlags, DiskInodeType, File};
 use crate::mm::{UserBuffer, add_free, translated_refmut};
 use crate::config::PAGE_SIZE;
@@ -14,7 +14,7 @@ use crate::gdb_print;
 use crate::monitor::*;
 //use easy_fs::DiskInodeType;
 use switch::__switch;
-pub use task::{TaskControlBlock, TaskControlBlockInner, TaskStatus, FdTable};
+pub use process::{ProcessControlBlock, ProcessControlBlockInner, TaskStatus, FdTable};
 pub use info::*;
 pub use resource::*;
 use alloc::sync::Arc;
@@ -39,8 +39,8 @@ pub use processor::{
     get_kernel_runtime_usec,
 };
 pub use manager::{add_task, find_task};
-pub use pid::{PidHandle, pid_alloc, KernelStack};
-pub use task::AuxHeader;
+pub use id::{idHandle, pid_alloc, KernelStack,idAllocator,kstack_alloc};
+pub use process::AuxHeader;
 
 
 pub fn suspend_current_and_run_next() -> isize{
@@ -111,10 +111,10 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 }
 
 lazy_static! {
-    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
+    pub static ref INITPROC: Arc<ProcessControlBlock> = Arc::new({
         let inode = open("/","initproc", OpenFlags::RDONLY, DiskInodeType::File).unwrap();
         let v = inode.read_all();
-        TaskControlBlock::new(v.as_slice())
+        ProcessControlBlock::new(v.as_slice())
     });
 }
 

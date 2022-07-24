@@ -250,7 +250,7 @@ pub struct ArgMachine {
 impl ArgMachine {
     //display the cmd head
     fn print_root(&mut self) {
-        print!("{}@UltraOS: /", color_text!("root", 32));
+        print!("{}@TCore: /", color_text!("root", 32));
         self.path.iter().for_each(|string| print!("{}/", string));
         print!(" >>");
     }

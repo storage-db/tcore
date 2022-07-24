@@ -7,7 +7,7 @@ use crate::{fs::{Dirent, FdSet, File, FileClass, FileDescripter, IoVec, IoVecs, 
         monitor::*, 
         task::{
         FdTable,
-        TaskControlBlockInner,
+        ProcessControlBlockInner,
         TimeVal,
     }};
 use crate::task::{current_user_token, current_task, suspend_current_and_run_next/* , print_core_info*/};
@@ -924,7 +924,7 @@ pub fn sys_readlinkat(dirfd: isize, pathname: *const u8, buf: *mut u8, bufsiz: u
     
 }
 
-fn get_file_discpt(fd: isize, path:&String, inner: &MutexGuard<TaskControlBlockInner>, oflags: OpenFlags) -> Option<FileClass>{
+fn get_file_discpt(fd: isize, path:&String, inner: &MutexGuard<ProcessControlBlockInner>, oflags: OpenFlags) -> Option<FileClass>{
     let type_ = {
         if oflags.contains(OpenFlags::DIRECTROY) {
             DiskInodeType::Directory

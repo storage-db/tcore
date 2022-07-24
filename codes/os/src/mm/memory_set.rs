@@ -373,7 +373,7 @@ impl MemorySet {
         let max_top_va: VirtAddr = TRAP_CONTEXT.into();
         let mut user_stack_top: usize = TRAP_CONTEXT;
         user_stack_top -= PAGE_SIZE;
-        let user_stack_bottom: usize = user_stack_top - USER_STACK_SIZE_MIN; 
+        let user_stack_bottom: usize = user_stack_top - THREAD_STACK_SIZE_MIN; 
         memory_set.push(MapArea::new(
             user_stack_bottom.into(),
             user_stack_top.into(),
