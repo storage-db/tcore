@@ -423,9 +423,9 @@ impl ArgMachine {
     }
 
     pub fn auto_run_testsuites() {
-        // ArgMachine::auto_run_busybox();
-        // ArgMachine::auto_run_lmbench();
-        // ArgMachine::final_ten_hours();
+        ArgMachine::auto_run_busybox();
+        ArgMachine::auto_run_lmbench();
+        ArgMachine::final_ten_hours();
     }
 
     pub fn final_ten_hours() {
@@ -616,7 +616,7 @@ impl ArgMachine {
         testsuits.push("true\0");
         testsuits.push("uname\0");
         testsuits.push("printf\0 \"abc\n\"\0");
-        testsuits.push("kill\0 10\0");
+        // testsuits.push("kill\0 10\0");
 
         // file
         testsuits.push("echo\0 \"#### file opration test\"\0");
@@ -658,19 +658,19 @@ impl ArgMachine {
         testsuits.push("more\0 test.txt\0");
         testsuits.push("rm\0 test.txt\0"); //ok
         testsuits.push("free\0");
-        testsuits.push("hwclock\0");
+        // testsuits.push("hwclock\0");
         testsuits.push("ls\0");
 
         // lua: all pass
         // testsuits.push("date.lua\0");
         // testsuits.push("file_io.lua\0");
         // testsuits.push("random.lua\0");
-        testsuits.push("remove.lua\0");
-        testsuits.push("sin30.lua\0");
+        // testsuits.push("remove.lua\0");
+        // testsuits.push("sin30.lua\0");
         // testsuits.push("max_min.lua\0");
-        testsuits.push("round_num.lua\0");
+        // testsuits.push("round_num.lua\0");
         // testsuits.push("sort.lua\0");
-        testsuits.push("strings.lua\0");
+        // testsuits.push("strings.lua\0");
 
         testsuits.push("ash\0 -c\0 exit\0");
         testsuits.push("sh\0 -c\0 exit\0");
@@ -864,7 +864,7 @@ pub fn main() -> i32 {
     //unlink("initproc\0");
     //unlink("user_shell\0");
     println!("Delete init programs initproc and user_shell in FS");
-    // ArgMachine::auto_run_testsuites();
+    ArgMachine::auto_run_testsuites();
     let mut line: String;
     let mut shellmachine = InputMachine::new();
     let mut arg_machine = ArgMachine::new();

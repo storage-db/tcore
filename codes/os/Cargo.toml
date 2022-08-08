@@ -1,5 +1,5 @@
 [package]
-name = "TCore"
+name = "os"
 version = "0.1.1"
 authors = ["LoanCold <loancold@foxmail.com>", "Haochen Gong <1527198893@qq.com>", "Xiangyu REN"]
 edition = "2018"

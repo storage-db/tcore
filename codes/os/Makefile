@@ -1,7 +1,7 @@
 # Building
 TARGET := riscv64imac-unknown-none-elf
 MODE := release
-KERNEL_ELF := target/$(TARGET)/$(MODE)/TCore
+KERNEL_ELF := target/$(TARGET)/$(MODE)/os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
 FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
@@ -16,7 +16,7 @@ endif
 
 SDCARD := /dev/sdb
 APPS := ../user/src/bin/*
-TOP := ../../k210.bin
+TOP := ../../os.bin
 
 # BOARD
 BOARD ?= qemu
@@ -49,7 +49,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 DISASM ?= -x
 
 # build: env $(KERNEL_BIN) $(FS_IMG) fat32
-build: $(KERNEL_BIN)
+build: env $(KERNEL_BIN)
 
 env:
 	rustup override set nightly-2021-05-10
@@ -82,7 +82,7 @@ fsimg-format:
 kernel:
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build --release --features "board_$(BOARD)"
+	@cargo build --offline --release --features "board_$(BOARD)"
 	@rm src/linker.ld
 
 clean:
@@ -98,7 +98,6 @@ ifeq ($(BOARD),qemu)
 		-bios $(BOOTLOADER) \
 		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) \
 		-drive file=$(U_FAT32),if=none,format=raw,id=x0 \
-		-device virtio-gpu-device,bus=virtio-mmio-bus.1\
         -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0\
 		-smp threads=2
 else
