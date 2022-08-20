@@ -203,7 +203,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 6]) -> isize {
             unsafe {
                 //llvm_asm!("sfence.vma" :::: "volatile");
             }
-            sys_fork()
+            sys_fork(args[0] as usize, args[1] as  usize, args[2] as  usize, args[3] as  usize, args[4] as usize)
         },
         SYSCALL_EXEC => {
             unsafe {

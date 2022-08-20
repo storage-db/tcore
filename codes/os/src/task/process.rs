@@ -226,7 +226,7 @@ impl ProcessControlBlock {
     }
 
     /// Only support processes with a single thread.
-    pub fn fork(self: &Arc<Self>) -> Arc<Self> {
+    pub fn fork(self: &Arc<Self>,is_created_thread :bool) -> Arc<Self> {
         let mut parent = self.acquire_inner_lock();
         assert_eq!(parent.thread_count(), 1);
         // clone parent's memory_set completely including trampoline/ustacks/trap_cxs

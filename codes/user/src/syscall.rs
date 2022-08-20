@@ -42,7 +42,7 @@ const SYSCALL_GETEGID: usize = 177;
 const SYSCALL_SBRK: usize = 213;
 const SYSCALL_BRK: usize = 214;
 const SYSCALL_MUNMAP: usize = 215;
-const SYSCALL_FORK: usize = 220;
+const SYSCALL_CLONE: usize = 220;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_MMAP: usize = 222;
 const SYSCALL_MPROTECT: usize = 226;
@@ -174,7 +174,7 @@ pub fn sys_waittid(tid : usize)->isize{
 
 
 pub fn sys_fork() -> isize {
-    syscall(SYSCALL_FORK, [0, 0, 0])
+    syscall(SYSCALL_CLONE, [17, 0, 0])
 }
 
 pub fn sys_exec(path: &str, args: &[*const u8]) -> isize {
