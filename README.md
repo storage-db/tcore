@@ -140,6 +140,7 @@ Tcore目前是能够稳定在双核qemu虚拟机或者k210板上运行，同时�
 + 流程图绘制 ：推荐ProcessOn
 + GDB调试面板DashBoard：https://github.com/cyrus-and/gdb-dashboard  网速不好的情况下可以直击复制在自己工作目录下使用(保持文件名相同复制.gdbinit文件内容)
 + GDB常见命令：https://mp.weixin.qq.com/s/XxPIfrQ3E0GR88UsmQNggg
++ 该系统目前在`rustc 1.64.0-nightly (495b21669 2022-07-03)`下可稳定运行
   
 ## 分工和协作
 + 王炼(队长)：负责task模块的重写和trap的设计
